@@ -108,11 +108,11 @@ class Extension extends CompilerExtension
 			->setClass('WebLoader\FileCollection')
 			->setArguments(array($config['sourceDir']));
 
-		foreach ($this->findFiles($config['files'], $config['sourceDir']) as $file) {
+		foreach ($this->findFiles($config['files'] ?? [], $config['sourceDir']) as $file) {
 			$files->addSetup('addFile', array($file));
 		}
 
-		foreach ($this->findFiles($config['watchFiles'], $config['sourceDir']) as $file) {
+		foreach ($this->findFiles($config['watchFiles'] ?? [], $config['sourceDir']) as $file) {
 			$files->addSetup('addWatchFile', array($file));
 		}
 
