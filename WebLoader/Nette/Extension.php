@@ -74,7 +74,7 @@ class Extension extends CompilerExtension
 		$builder->addDefinition($this->prefix('jsNamingConvention'))
 			->setFactory('WebLoader\DefaultOutputNamingConvention::createJsConvention');
 
-		if ($config['debugger']) {
+		if ($config['debugger'] ?? false) {
 			$builder->addDefinition($this->prefix('tracyPanel'))
 				->setClass('WebLoader\Nette\Diagnostics\Panel')
 				->setArguments(array($builder->expand('%appDir%')));
@@ -116,30 +116,30 @@ class Extension extends CompilerExtension
 			$files->addSetup('addWatchFile', array($file));
 		}
 
-		$files->addSetup('addRemoteFiles', array($config['remoteFiles']));
+		$files->addSetup('addRemoteFiles', array($config['remoteFiles'] ?? []));
 
 		$compiler = $builder->addDefinition($this->prefix($name . 'Compiler'))
 			->setClass('WebLoader\Compiler')
 			->setArguments(array(
 				'@' . $filesServiceName,
-				$config['namingConvention'],
+				$config['namingConvention'] ?? null,
 				$config['tempDir'],
 			));
 
 		$compiler->addSetup('setJoinFiles', array($config['joinFiles']));
 
-		if ($builder->parameters['webloader']['debugger']) {
+		if ($builder->parameters['webloader']['debugger'] ?? false) {
 			$compiler->addSetup('@' . $this->prefix('tracyPanel') . '::addLoader', array(
 				$name,
 				'@' . $this->prefix($name . 'Compiler')
 			));
 		}
 
-		foreach ($config['filters'] as $filter) {
+		foreach ($config['filters'] ?? [] as $filter) {
 			$compiler->addSetup('addFilter', array($filter));
 		}
 
-		foreach ($config['fileFilters'] as $filter) {
+		foreach ($config['fileFilters'] ?? [] as $filter) {
 			$compiler->addSetup('addFileFilter', array($filter));
 		}
 
@@ -147,7 +147,7 @@ class Extension extends CompilerExtension
 			$compiler->addSetup('enableDebugging');
 		}
 
-		$compiler->addSetup('setCheckLastModified', array($config['checkLastModified']));
+		$compiler->addSetup('setCheckLastModified', array($config['checkLastModified'] ?? null));
 
 		// todo css media
 	}
@@ -155,10 +155,10 @@ class Extension extends CompilerExtension
 	public function afterCompile(Nette\PhpGenerator\ClassType $class)
 	{
 		$meta = $class->properties['meta'];
-		if (array_key_exists('webloader\\nette\\loaderfactory', $meta->value['types'])) {
+		if ($meta && array_key_exists('webloader\\nette\\loaderfactory', $meta->value['types'])) {
 			$meta->value['types']['webloader\\loaderfactory'] = $meta->value['types']['webloader\\nette\\loaderfactory'];
 		}
-		if (array_key_exists('WebLoader\\Nette\\LoaderFactory', $meta->value['types'])) {
+		if ($meta && array_key_exists('WebLoader\\Nette\\LoaderFactory', $meta->value['types'])) {
 			$meta->value['types']['WebLoader\\LoaderFactory'] = $meta->value['types']['WebLoader\\Nette\\LoaderFactory'];
 		}
 
