@@ -76,7 +76,7 @@ class Extension extends CompilerExtension
 
 		if ($config['debugger'] ?? false) {
 			$builder->addDefinition($this->prefix('tracyPanel'))
-				->setClass('WebLoader\Nette\Diagnostics\Panel')
+				->setFactory('WebLoader\Nette\Diagnostics\Panel')
 				->setArguments(array($builder->expand('%appDir%')));
 		}
 
@@ -97,7 +97,7 @@ class Extension extends CompilerExtension
 		}
 
 		$builder->addDefinition($this->prefix('factory'))
-			->setClass('WebLoader\Nette\LoaderFactory', array($loaderFactoryTempPaths, $this->name));
+			->setFactory('WebLoader\Nette\LoaderFactory', array($loaderFactoryTempPaths, $this->name));
 	}
 
 	private function addWebLoader(ContainerBuilder $builder, $name, $config)
@@ -105,7 +105,7 @@ class Extension extends CompilerExtension
 		$filesServiceName = $this->prefix($name . 'Files');
 
 		$files = $builder->addDefinition($filesServiceName)
-			->setClass('WebLoader\FileCollection')
+			->setFactory('WebLoader\FileCollection')
 			->setArguments(array($config['sourceDir']));
 
 		foreach ($this->findFiles($config['files'] ?? [], $config['sourceDir']) as $file) {
@@ -119,7 +119,7 @@ class Extension extends CompilerExtension
 		$files->addSetup('addRemoteFiles', array($config['remoteFiles'] ?? []));
 
 		$compiler = $builder->addDefinition($this->prefix($name . 'Compiler'))
-			->setClass('WebLoader\Compiler')
+			->setFactory('WebLoader\Compiler')
 			->setArguments(array(
 				'@' . $filesServiceName,
 				$config['namingConvention'] ?? null,
@@ -154,7 +154,7 @@ class Extension extends CompilerExtension
 
 	public function afterCompile(Nette\PhpGenerator\ClassType $class)
 	{
-		$meta = $class->properties['meta'];
+		$meta = $class->getProperties()['meta'] ?? null;
 		if ($meta && array_key_exists('webloader\\nette\\loaderfactory', $meta->value['types'])) {
 			$meta->value['types']['webloader\\loaderfactory'] = $meta->value['types']['webloader\\nette\\loaderfactory'];
 		}
@@ -162,7 +162,7 @@ class Extension extends CompilerExtension
 			$meta->value['types']['WebLoader\\LoaderFactory'] = $meta->value['types']['WebLoader\\Nette\\LoaderFactory'];
 		}
 
-		$init = $class->methods['initialize'];
+		$init = $class->getMethod('initialize');
 		$init->addBody('if (!class_exists(?, ?)) class_alias(?, ?);', array('WebLoader\\LoaderFactory', FALSE, 'WebLoader\\Nette\\LoaderFactory', 'WebLoader\\LoaderFactory'));
 	}
 
