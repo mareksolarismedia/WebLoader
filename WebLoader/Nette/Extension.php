@@ -66,7 +66,8 @@ class Extension extends CompilerExtension
 	public function loadConfiguration()
 	{
 		$builder = $this->getContainerBuilder();
-		$config = $this->getConfig($this->getDefaultConfig());
+		$config = $this->getDefaultConfig();
+		$config = array_merge_override($config, $this->getConfig());
 
 		$builder->addDefinition($this->prefix('cssNamingConvention'))
 			->setFactory('WebLoader\DefaultOutputNamingConvention::createCssConvention');
@@ -77,7 +78,7 @@ class Extension extends CompilerExtension
 		if ($config['debugger'] ?? false) {
 			$builder->addDefinition($this->prefix('tracyPanel'))
 				->setFactory('WebLoader\Nette\Diagnostics\Panel')
-				->setArguments(array($builder->expand('%appDir%')));
+				->setArguments(array(Nette\DI\Helpers::expand('%appDir%', $builder->parameters)));
 		}
 
 		$builder->parameters['webloader'] = $config;
@@ -87,6 +88,7 @@ class Extension extends CompilerExtension
 		foreach (array('css', 'js') as $type) {
 			foreach ($config[$type] as $name => $wlConfig) {
 				$wlConfig = Helpers::merge($wlConfig, $config[$type . 'Defaults']);
+
 				$this->addWebLoader($builder, $type . ucfirst($name), $wlConfig);
 				$loaderFactoryTempPaths[strtolower($name)] = $wlConfig['tempPath'];
 
@@ -122,7 +124,7 @@ class Extension extends CompilerExtension
 			->setFactory('WebLoader\Compiler')
 			->setArguments(array(
 				'@' . $filesServiceName,
-				$config['namingConvention'] ?? null,
+				$config['namingConvention'],
 				$config['tempDir'],
 			));
 
